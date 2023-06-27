@@ -5,11 +5,12 @@
 
 #include <raylib.h>
 
-#include <system/strid.h>
+#include "system/strid.h"
 #define SCOPE_NAME "intro"
-#include <system/logging.h>
+#include "system/logging.h"
 
-#include <game/game.h>
+#include "game/game.h"
+#include "game/states/placeholder.h"
 
 
 typedef struct intro_state_s {
@@ -31,12 +32,12 @@ static void _intro_state_update(game_state_t* state, game_t* game, update_contex
 
     float progress = (GetTime() - intro->start_time) / 1.5;
     if (GetKeyPressed() != 0 || progress >= 1)
-        progress = 1;
+        game_switch_state(game, placeholder_state_create());
 
     int size = 40;
     Rectangle rect = (Rectangle) {
-        .x = (game->canvas.texture.width - size) / 2,
-        .y = (game->canvas.texture.height - size) / 2,
+        .x = (game->canvas.texture.width - size) / 2.0f,
+        .y = (game->canvas.texture.height - size) / 2.0f,
         .width = size,
         .height = size
     };
