@@ -1,4 +1,4 @@
-#include <game/states/intro.h>
+#include "game/states/intro.h"
 
 #include <assert.h>
 #include <math.h>
@@ -10,7 +10,7 @@
 #include "system/logging.h"
 
 #include "game/game.h"
-#include "game/states/placeholder.h"
+#include "game/states/gameplay.h"
 
 
 typedef struct intro_state_s {
@@ -30,21 +30,23 @@ static void _intro_state_enter(game_state_t* state, game_t* game) {
 static void _intro_state_update(game_state_t* state, game_t* game, update_context_t ctx) {
     intro_state_t* intro = (intro_state_t*)state->data;
 
-    float progress = (GetTime() - intro->start_time) / 1.5;
-    if (GetKeyPressed() != 0 || progress >= 1)
-        game_switch_state(game, placeholder_state_create());
+    // FIXME: font and rectangle size
+    
+    // float progress = (GetTime() - intro->start_time) / 1.5;
+    // if (GetKeyPressed() != 0 || progress >= 1)
+    game_switch_state(game, gameplay_state_create());
 
-    int size = 40;
-    Rectangle rect = (Rectangle) {
-        .x = (game->canvas.texture.width - size) / 2.0f,
-        .y = (game->canvas.texture.height - size) / 2.0f,
-        .width = size,
-        .height = size
-    };
+    // int size = 40;
+    // Rectangle rect = (Rectangle) {
+    //     .x = (game->canvas.texture.width - size) / 2.0f,
+    //     .y = (game->canvas.texture.height - size) / 2.0f,
+    //     .width = size,
+    //     .height = size
+    // };
 
-    DrawText("Made with", 0, (game->canvas.texture.height) / 2 - 9, 8, WHITE);
-    DrawRectangleLinesEx(rect, 2, WHITE);
-    DrawText(TextSubtext("raylib", 0, 6 * fmin(1, progress / 0.15)), rect.x + 8, rect.y + 27, 8, WHITE);
+    // DrawText("Made with", 0, (game->canvas.texture.height) / 2 - 9, 8, WHITE);
+    // DrawRectangleLinesEx(rect, 2, WHITE);
+    // DrawText(TextSubtext("raylib", 0, 6 * fmin(1, progress / 0.15)), rect.x + 8, rect.y + 27, 8, WHITE);
 }
 
 static void _intro_state_exit(game_state_t* state, game_t* game) {

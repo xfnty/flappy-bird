@@ -51,7 +51,7 @@ bool _engine_init(engine_t* engine, int argc, const char** argv) {
 	debug_attach_signal_handler();
 
 	SetTraceLogCallback(_raylib_log_callback);
-	InitWindow(800, 450, "Pong");
+	InitWindow(640, 480, "Flappy Bird");
 	SetWindowState(FLAG_WINDOW_RESIZABLE);
     SetExitKey(0);
 	SetTargetFPS(60);
