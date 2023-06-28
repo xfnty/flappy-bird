@@ -14,8 +14,11 @@
 #include "game/game.h"
 
 
-const float pipe_speed = 100;
-const float space_between_pipes = 100;
+const float scroll_speed = 75;
+const float space_between_pipes = 200;
+const float pipe_window_height = 60;
+const float pipe_min_y = 100;
+const float pipe_max_y = 300;
 
 typedef struct gameplay_state_s {
     struct {
@@ -28,8 +31,10 @@ typedef struct gameplay_state_s {
 } gameplay_state_t;
 
 
+static void draw_pipe(Vector2 center, gameplay_state_t* gameplay);
 static void draw_pipes(gameplay_state_t* gameplay, game_t* game, update_context_t ctx);
 static void draw_base(gameplay_state_t* gameplay, game_t* game, update_context_t ctx);
+static void update_pipes(gameplay_state_t* gameplay, game_t* game);
 
 static void _gameplay_state_enter(game_state_t* state, game_t* game) {
     state->data = malloc(sizeof(gameplay_state_t));
@@ -37,26 +42,39 @@ static void _gameplay_state_enter(game_state_t* state, game_t* game) {
     gameplay_state_t* gameplay = (gameplay_state_t*)state->data;
 
     *gameplay = (gameplay_state_t) {0};
-    
+
     gameplay->sprites.bg_day = LoadTexture("assets/background-day.png");
     assert(IsTextureReady(gameplay->sprites.bg_day));
     gameplay->sprites.base = LoadTexture("assets/base.png");
     assert(IsTextureReady(gameplay->sprites.base));
     gameplay->sprites.pipe = LoadTexture("assets/pipe.png");
     assert(IsTextureReady(gameplay->sprites.pipe));
+
+    kv_init(gameplay->pipes);
+    for (int i = 0; i < game->canvas.texture.width / space_between_pipes + 1; i++) {
+        Vector2 v = {
+            game->canvas.texture.width + (float)gameplay->sprites.pipe.width / 2 + i * space_between_pipes,
+            GetRandomValue(pipe_min_y, pipe_max_y)
+        };
+        kv_push(Vector2, gameplay->pipes, v);
+    }
 }
 
 static void _gameplay_state_update(game_state_t* state, game_t* game, update_context_t ctx) {
     gameplay_state_t* gameplay = (gameplay_state_t*)state->data;
 
-    if (IsKeyPressed(KEY_ESCAPE))
-        game->is_running = false;
+    update_pipes(gameplay, game);
 
     ClearBackground(WHITE);
     DrawTexture(gameplay->sprites.bg_day, 0, 0, WHITE);
- 
     draw_pipes(gameplay, game, ctx);
     draw_base(gameplay, game, ctx);
+
+    for (int i = 0; i < kv_size(gameplay->pipes); i++)
+        DrawText(TextFormat("%.1f", kv_A(gameplay->pipes, i).y), 0, 20 * i, 16, BLACK);
+
+    if (IsKeyPressed(KEY_ESCAPE))
+        game->is_running = false;
 }
 
 static void _gameplay_state_exit(game_state_t* state, game_t* game) {
@@ -73,16 +91,13 @@ game_state_t gameplay_state_create() {
     };
 }
 
-void draw_pipes(gameplay_state_t* gameplay, game_t* game, update_context_t ctx) {
-    float center_y = ctx.mouse.y;
-    float window_height = 50;
-
+void draw_pipe(Vector2 center, gameplay_state_t* gameplay) {
     DrawTextureEx(
         gameplay->sprites.pipe,
         (Vector2)
         {
-            (float)game->canvas.texture.width / 2 - (float)gameplay->sprites.pipe.width / 2,
-            center_y + window_height / 2
+            center.x - (float)gameplay->sprites.pipe.width / 2,
+            center.y + pipe_window_height / 2
         },
         0,
         1,
@@ -92,8 +107,8 @@ void draw_pipes(gameplay_state_t* gameplay, game_t* game, update_context_t ctx) 
         gameplay->sprites.pipe,
         (Vector2)
         {
-            (float)game->canvas.texture.width / 2 + (float)gameplay->sprites.pipe.width / 2,
-            center_y - window_height / 2
+            center.x + (float)gameplay->sprites.pipe.width / 2,
+            center.y - pipe_window_height / 2
         },
         180,
         1,
@@ -101,10 +116,16 @@ void draw_pipes(gameplay_state_t* gameplay, game_t* game, update_context_t ctx) 
     );
 }
 
+void draw_pipes(gameplay_state_t* gameplay, game_t* game, update_context_t ctx) {
+    for (int i = 0; i < kv_size(gameplay->pipes); i++)
+        if (kv_A(gameplay->pipes, i).y != 0)
+            draw_pipe(kv_A(gameplay->pipes, i), gameplay);
+}
+
 void draw_base(gameplay_state_t* gameplay, game_t* game, update_context_t ctx) {
-    // FIXME: flickering
+    // FIXME: flickering every second
     
-    float shift = (GetTime() - (int)GetTime()) * pipe_speed;
+    float shift = scroll_speed * (GetTime() - (int)GetTime());
     for (int i = 0; gameplay->sprites.base.width * i - shift <= game->canvas.texture.width; i++) {
         DrawTexture(
             gameplay->sprites.base,
@@ -112,5 +133,19 @@ void draw_base(gameplay_state_t* gameplay, game_t* game, update_context_t ctx) {
             game->canvas.texture.height - gameplay->sprites.base.height,
             WHITE
         );
+    }
+}
+
+void update_pipes(gameplay_state_t* gameplay, game_t* game) {
+    for (int i = 0; i < kv_size(gameplay->pipes); i++)
+        kv_A(gameplay->pipes, i).x -= scroll_speed * GetFrameTime();
+
+    if (kv_A(gameplay->pipes, 0).x + (float)gameplay->sprites.pipe.width / 2 <= 0) {
+        for (int i = 0; i < kv_size(gameplay->pipes) - 1; i++)
+            kv_A(gameplay->pipes, i) = kv_A(gameplay->pipes, i + 1);
+        kv_A(gameplay->pipes, kv_size(gameplay->pipes) - 1) = (Vector2) {
+            kv_A(gameplay->pipes, kv_size(gameplay->pipes) - 2).x + space_between_pipes,
+            GetRandomValue(pipe_min_y, pipe_max_y)
+        };
     }
 }
