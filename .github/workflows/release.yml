@@ -46,10 +46,10 @@ jobs:
       run: sudo apt install -y build-essential git cmake libasound2-dev mesa-common-dev libx11-dev libxrandr-dev libxi-dev xorg-dev libgl1-mesa-dev libglu1-mesa-dev
     
     - name: Configuring CMake
-      run: python toolchain.py -c --target Release
+      run: python toolchain.py -c
 
     - name: Building
-      run: python toolchain.py -b --target Release
+      run: python toolchain.py -b
 
     - name: Zip linux artifact
       run: zip -r flappybird-linux ./build/release
@@ -73,10 +73,10 @@ jobs:
         python-version: "3.10"
 
     - name: Configuring CMake
-      run: python toolchain.py -c --target Release
+      run: python toolchain.py -c
 
     - name: Building
-      run: python toolchain.py -b --target Release
+      run: python toolchain.py -b
 
     - name: Zip macos artifact
       run: zip -r flappybird-macos ./build/release
@@ -99,10 +99,10 @@ jobs:
         python-version: "3.10"
 
     - name: Configure
-      run: python toolchain.py -c --target Release
+      run: python toolchain.py -c
 
     - name: Build
-      run: python toolchain.py -b --target Release
+      run: python toolchain.py -b
 
     - name: Zip windows artifact
       run: powershell Compress-Archive build flappybird-windows.zip
