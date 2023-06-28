@@ -6,6 +6,16 @@
 
 </p>
 
+**TODO:**
+- [x] Base and background
+- [x] Pipes
+- [x] Bird
+- [x] Score
+- [ ] Bird animations
+- [ ] Game Over screen
+- [ ] Start The Game screen
+
+
 ## Developing
 
 ### Installing dependencies
