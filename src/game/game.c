@@ -47,8 +47,6 @@ void game_tick(game_t* game, update_context_t ctx) {
 
     ClearBackground(BLACK);
     game_state_update(&game->state, game, ctx);
-
-    game->is_running = !WindowShouldClose();
 }
 
 void game_debug_draw(game_t* game, update_context_t ctx) {

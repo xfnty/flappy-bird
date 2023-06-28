@@ -29,7 +29,7 @@ int engine_run(engine_t* engine, int argc, const char** argv) {
     if (!_engine_init(engine, argc, argv))
         return engine->exit_error;
 
-    while (_engine_tick(engine));
+    while (_engine_tick(engine) && !WindowShouldClose());
 
     _engine_shutdown(engine);
 

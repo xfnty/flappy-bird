@@ -1,7 +1,8 @@
 #include "game/states/gameplay.h"
 
-#include <assert.h>
 #include <math.h>
+#include <stdio.h>
+#include <assert.h>
 
 #include <kvec.h>
 #include <raylib.h>
@@ -27,12 +28,16 @@ static struct {
     Texture2D base;
     Texture2D pipe;
     Texture2D bird;
+    Texture2D digits[10];
 } sprites = {0};
 
 typedef struct gameplay_state_s {
     bool is_paused;
     float bird_y;
     float bird_y_speed;
+    bool is_bird_between_pipes;
+    bool is_debug;
+    int score;
     kvec_t(Vector2) pipes;
 } gameplay_state_t;
 
@@ -41,6 +46,8 @@ static void draw_pipe(Vector2 center, gameplay_state_t* gameplay);
 static void draw_pipes(gameplay_state_t* gameplay, game_t* game, update_context_t ctx);
 static void draw_base(gameplay_state_t* gameplay, game_t* game, update_context_t ctx);
 static void draw_bird(gameplay_state_t* gameplay, game_t* game);
+static void draw_score(gameplay_state_t* gameplay, game_t* game);
+static void debug_draw(gameplay_state_t* gameplay, game_t* game);
 static void update_bird(gameplay_state_t* gameplay, game_t* game);
 static void update_pipes(gameplay_state_t* gameplay, game_t* game);
 
@@ -55,6 +62,8 @@ static void _gameplay_state_enter(game_state_t* state, game_t* game) {
     if (sprites.base.id == 0) sprites.base = LoadTexture("assets/base.png");
     if (sprites.pipe.id == 0) sprites.pipe = LoadTexture("assets/pipe.png");
     if (sprites.bird.id == 0) sprites.bird = LoadTexture("assets/midflap.png");
+    for (int i = 0; i < STACKARRAY_SIZE(sprites.digits); i++)
+        if (sprites.digits[i].id == 0) sprites.digits[i] = LoadTexture(TextFormat("assets/%d.png", i));
 
     gameplay->bird_y = ((float)game->canvas.texture.height - sprites.base.height) / 2;
 
@@ -82,9 +91,15 @@ static void _gameplay_state_update(game_state_t* state, game_t* game, update_con
     draw_pipes(gameplay, game, ctx);
     draw_base(gameplay, game, ctx);
     draw_bird(gameplay, game);
+    draw_score(gameplay, game);
+
+    if (gameplay->is_debug)
+        debug_draw(gameplay, game);
 
     if (IsKeyPressed(KEY_ENTER))
         gameplay->is_paused = !gameplay->is_paused;
+    if (IsKeyPressed(KEY_D))
+        gameplay->is_debug = !gameplay->is_debug;
     if (IsKeyPressed(KEY_ESCAPE))
         game->is_running = false;
 }
@@ -143,8 +158,6 @@ void draw_pipes(gameplay_state_t* gameplay, game_t* game, update_context_t ctx) 
 }
 
 void draw_base(gameplay_state_t* gameplay, game_t* game, update_context_t ctx) {
-    // FIXME: flickering every second
-    
     float shift = (gameplay->is_paused) ? 0 : scroll_speed * (GetTime() - (int)GetTime());
     for (int i = 0; sprites.base.width * i - shift <= game->canvas.texture.width; i++) {
         DrawTexture(
@@ -172,23 +185,36 @@ void draw_bird(gameplay_state_t* gameplay, game_t* game) {
     );
 }
 
-void update_bird(gameplay_state_t* gameplay, game_t* game) {
-    gameplay->bird_y_speed += bird_gravity_force * GetFrameTime();
-    if (IsKeyPressed(KEY_SPACE))
-        gameplay->bird_y_speed = -bird_up_force;
+void draw_score(gameplay_state_t* gameplay, game_t* game) {
+    const char* s = TextFormat("%d", gameplay->score);
+    float l = 0;
 
-    gameplay->bird_y += gameplay->bird_y_speed * GetFrameTime();
+    for (int i = 0; i < TextLength(s); i++)
+        l += sprites.digits[s[i] - '0'].width;
 
-    if (gameplay->bird_y + sprites.bird.height >= game->canvas.texture.height - sprites.base.height)
-        game_switch_state(game, gameplay_state_create());
+    float t = 0;
+    for (int i = 0; i < TextLength(s); i++) {
+        DrawTexture(
+            sprites.digits[s[i] - '0'],
+            game->canvas.texture.width / 2.0f - l / 2 + t,
+            50,
+            WHITE
+        );
+        t += sprites.digits[s[i] - '0'].width;
+    }
+}
 
-    Rectangle bird_rect = {
-        (float)game->canvas.texture.width / 2 - (float)sprites.bird.width / 2,
-        gameplay->bird_y - (float)sprites.bird.height / 2,
-        sprites.bird.width,
-        sprites.bird.height
-    };
-    DrawRectangleLinesEx(bird_rect, 1, RED);
+void debug_draw(gameplay_state_t* gameplay, game_t* game) {
+    DrawRectangleLinesEx(
+        (Rectangle) {
+            game->canvas.texture.width / 2.0f - sprites.bird.width / 2.0f,
+            gameplay->bird_y - (float)sprites.bird.height / 2,
+            sprites.bird.width,
+            sprites.bird.height
+        },
+        1,
+        RED
+    );
 
     for (int i = 0; i < kv_size(gameplay->pipes); i++) {
         Vector2 center = kv_A(gameplay->pipes, i);
@@ -205,13 +231,68 @@ void update_bird(gameplay_state_t* gameplay, game_t* game) {
             .width = pipe_size.x,
             .height = pipe_size.y
         };
+        Rectangle score_trigger_rect = {
+            .x = center.x - pipe_size.x / 2,
+            .y = center.y - pipe_window_height / 2,
+            .width = pipe_size.x,
+            .height = pipe_window_height
+        };
 
         DrawRectangleLinesEx(top_pipe_rect, 1, ORANGE);
         DrawRectangleLinesEx(bottom_pipe_rect, 1, ORANGE);
+        DrawRectangleLinesEx(score_trigger_rect, 3, GREEN);
+    }
+}
+
+void update_bird(gameplay_state_t* gameplay, game_t* game) {
+    gameplay->bird_y_speed += bird_gravity_force * GetFrameTime();
+    if (IsKeyPressed(KEY_SPACE))
+        gameplay->bird_y_speed = -bird_up_force;
+
+    gameplay->bird_y += gameplay->bird_y_speed * GetFrameTime();
+
+    if (gameplay->bird_y + sprites.bird.height >= game->canvas.texture.height - sprites.base.height)
+        game_switch_state(game, gameplay_state_create());
+
+    Rectangle bird_rect = {
+        (float)game->canvas.texture.width / 2 - (float)sprites.bird.width / 2,
+        gameplay->bird_y - (float)sprites.bird.height / 2,
+        sprites.bird.width,
+        sprites.bird.height
+    };
+
+    bool bird_between_pipes = false;
+    for (int i = 0; i < kv_size(gameplay->pipes); i++) {
+        Vector2 center = kv_A(gameplay->pipes, i);
+        Vector2 pipe_size = {(float)sprites.pipe.width, (float)sprites.pipe.height};
+        Rectangle top_pipe_rect = {
+            .x = center.x - pipe_size.x / 2,
+            .y = center.y - pipe_window_height / 2 - pipe_size.y,
+            .width = pipe_size.x,
+            .height = pipe_size.y
+        };
+        Rectangle bottom_pipe_rect = {
+            .x = center.x - pipe_size.x / 2,
+            .y = center.y + pipe_window_height / 2,
+            .width = pipe_size.x,
+            .height = pipe_size.y
+        };
+        Rectangle score_trigger_rect = {
+            .x = center.x - pipe_size.x / 2,
+            .y = center.y - pipe_window_height / 2,
+            .width = pipe_size.x,
+            .height = pipe_window_height
+        };
 
         if (CheckCollisionRecs(bird_rect, top_pipe_rect) || CheckCollisionRecs(bird_rect, bottom_pipe_rect))
             game_switch_state(game, gameplay_state_create());
+        
+        bird_between_pipes |= CheckCollisionRecs(bird_rect, score_trigger_rect);
     }
+
+    if (!bird_between_pipes && gameplay->is_bird_between_pipes)
+        gameplay->score++;
+    gameplay->is_bird_between_pipes = bird_between_pipes;
 }
 
 void update_pipes(gameplay_state_t* gameplay, game_t* game) {
