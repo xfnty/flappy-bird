@@ -3,6 +3,7 @@
 #include <assert.h>
 #include <math.h>
 
+#include <kvec.h>
 #include <raylib.h>
 
 #include "system/defines.h"
@@ -17,10 +18,13 @@ const float pipe_speed = 100;
 const float space_between_pipes = 100;
 
 typedef struct gameplay_state_s {
-    Texture2D bg_day;
-    Texture2D base;
-    Texture2D pipe;
-    float pipe_window_Ys[2];  // 0 means no pipe, gets shifted right to left
+    struct {
+        Texture2D bg_day;
+        Texture2D base;
+        Texture2D pipe;
+    } sprites;
+
+    kvec_t(Vector2) pipes;
 } gameplay_state_t;
 
 
@@ -34,12 +38,12 @@ static void _gameplay_state_enter(game_state_t* state, game_t* game) {
 
     *gameplay = (gameplay_state_t) {0};
     
-    gameplay->bg_day = LoadTexture("assets/background-day.png");
-    assert(IsTextureReady(gameplay->bg_day));
-    gameplay->base = LoadTexture("assets/base.png");
-    assert(IsTextureReady(gameplay->base));
-    gameplay->pipe = LoadTexture("assets/pipe.png");
-    assert(IsTextureReady(gameplay->pipe));
+    gameplay->sprites.bg_day = LoadTexture("assets/background-day.png");
+    assert(IsTextureReady(gameplay->sprites.bg_day));
+    gameplay->sprites.base = LoadTexture("assets/base.png");
+    assert(IsTextureReady(gameplay->sprites.base));
+    gameplay->sprites.pipe = LoadTexture("assets/pipe.png");
+    assert(IsTextureReady(gameplay->sprites.pipe));
 }
 
 static void _gameplay_state_update(game_state_t* state, game_t* game, update_context_t ctx) {
@@ -49,8 +53,9 @@ static void _gameplay_state_update(game_state_t* state, game_t* game, update_con
         game->is_running = false;
 
     ClearBackground(WHITE);
-    DrawTexture(gameplay->bg_day, 0, 0, WHITE);
+    DrawTexture(gameplay->sprites.bg_day, 0, 0, WHITE);
  
+    draw_pipes(gameplay, game, ctx);
     draw_base(gameplay, game, ctx);
 }
 
@@ -69,28 +74,42 @@ game_state_t gameplay_state_create() {
 }
 
 void draw_pipes(gameplay_state_t* gameplay, game_t* game, update_context_t ctx) {
-    const int max_pipe_count = STACKARRAY_SIZE(gameplay->pipe_window_Ys);
-    for (int i = max_pipe_count - 1; i >= 0; i--) {
-        if (!gameplay->pipe_window_Ys[i])
-            continue;
+    float center_y = ctx.mouse.y;
+    float window_height = 50;
 
-        // float pipe_y =
-        //     game->canvas.texture.width
-        //     - (game->canvas.texture.width / (float)max_pipe_count * i);
-        
-        // NOTE: max_pipe_count = (int)(game->canvas.texture.width / space_between_pipes)
-    }
+    DrawTextureEx(
+        gameplay->sprites.pipe,
+        (Vector2)
+        {
+            (float)game->canvas.texture.width / 2 - (float)gameplay->sprites.pipe.width / 2,
+            center_y + window_height / 2
+        },
+        0,
+        1,
+        WHITE
+    );
+    DrawTextureEx(
+        gameplay->sprites.pipe,
+        (Vector2)
+        {
+            (float)game->canvas.texture.width / 2 + (float)gameplay->sprites.pipe.width / 2,
+            center_y - window_height / 2
+        },
+        180,
+        1,
+        WHITE
+    );
 }
 
 void draw_base(gameplay_state_t* gameplay, game_t* game, update_context_t ctx) {
     // FIXME: flickering
     
     float shift = (GetTime() - (int)GetTime()) * pipe_speed;
-    for (int i = 0; gameplay->base.width * i - shift <= game->canvas.texture.width; i++) {
+    for (int i = 0; gameplay->sprites.base.width * i - shift <= game->canvas.texture.width; i++) {
         DrawTexture(
-            gameplay->base,
-            gameplay->base.width * i - shift,
-            game->canvas.texture.height - gameplay->base.height,
+            gameplay->sprites.base,
+            gameplay->sprites.base.width * i - shift,
+            game->canvas.texture.height - gameplay->sprites.base.height,
             WHITE
         );
     }

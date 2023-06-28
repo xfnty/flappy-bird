@@ -1,5 +1,5 @@
-name: Windows Build
-run-name: Windows Build
+name: OSX Build
+run-name: OSX Build
 
 on:
   workflow_dispatch:
@@ -11,16 +11,16 @@ permissions:
 
 jobs:
   build:
-    runs-on: windows-latest
+    runs-on: macos-latest
     steps:
     - uses: actions/checkout@v3
     - name: Set up Python 3.10
       uses: actions/setup-python@v3
       with:
         python-version: "3.10"
+
     - name: Configuring CMake
-      run: |
-        python toolchain.py -c --target Release
+      run: python toolchain.py -c --target Release
+
     - name: Building
-      run: |
-        python toolchain.py -b --target Release
+      run: python toolchain.py -b --target Release

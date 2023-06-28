@@ -10,7 +10,6 @@ option(BUILD_SHARED_LIBS "Build shared libs" OFF)
 
 # ===== Project ===== #
 project("flappy-bird" LANGUAGES C)
-add_compile_options(-O0 -g -rdynamic -fstack-protector-all -DMALLOC_DEBUG)
 
 
 # ===== Third Party libraries ===== #
@@ -38,14 +37,23 @@ link_libraries(${LINK_LIBRARIES})
 # ===== Targets ===== #
 add_executable(${PROJECT_NAME} ${SOURCE_MAIN} ${SOURCES})
 add_library("lib-${PROJECT_NAME}" STATIC ${SOURCES})
-set_target_properties(
-	${PROJECT_NAME}
-	PROPERTIES
-	OUTPUT_NAME "${PROJECT_NAME}"
-	RUNTIME_OUTPUT_DIRECTORY_DEBUG "${PROJECT_BUILD_DIRECTORY}/debug"
-	RUNTIME_OUTPUT_DIRECTORY_RELEASE "${PROJECT_BUILD_DIRECTORY}/release"
-)
-
+if (UNIX)
+    set_target_properties(
+    	${PROJECT_NAME}
+    	PROPERTIES
+    	OUTPUT_NAME "${PROJECT_NAME}"
+    	RUNTIME_OUTPUT_DIRECTORY_DEBUG "${PROJECT_BUILD_DIRECTORY}/debug"
+    	RUNTIME_OUTPUT_DIRECTORY_RELEASE "${PROJECT_BUILD_DIRECTORY}/release"
+    )
+elseif (WIN32)
+    set_target_properties(
+        ${PROJECT_NAME}
+        PROPERTIES
+        OUTPUT_NAME "${PROJECT_NAME}"
+        RUNTIME_OUTPUT_DIRECTORY_DEBUG "${PROJECT_BUILD_DIRECTORY}\\debug"
+        RUNTIME_OUTPUT_DIRECTORY_RELEASE "${PROJECT_BUILD_DIRECTORY}\\release"
+    )
+endif()
 
 # ===== Sandbox ===== #
 add_subdirectory("sandbox")

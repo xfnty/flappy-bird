@@ -48,8 +48,6 @@ bool _engine_init(engine_t* engine, int argc, const char** argv) {
         return false;
     }
 
-	debug_attach_signal_handler();
-
 	SetTraceLogCallback(_raylib_log_callback);
 	InitWindow(640, 480, "Flappy Bird");
 	SetWindowState(FLAG_WINDOW_RESIZABLE);

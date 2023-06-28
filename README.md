@@ -1,7 +1,8 @@
 <p float="left">
 
-<!-- [![Linux Build](https://github.com/ts-vadim/pong/actions/workflows/build-linux.yml/badge.svg)](https://github.com/ts-vadim/pong/actions/workflows/build-linux.yml) -->
-<!-- [![Windows Build](https://github.com/ts-vadim/pong/actions/workflows/build-windows.yml/badge.svg)](https://github.com/ts-vadim/pong/actions/workflows/build-windows.yml) -->
+[![Windows Build](https://github.com/xfnty/flappy-bird/actions/workflows/build-windows.yml/badge.svg)](https://github.com/xfnty/flappy-bird/actions/workflows/build-windows.yml)
+[![Linux Build](https://github.com/xfnty/flappy-bird/actions/workflows/build-linux.yml/badge.svg)](https://github.com/xfnty/flappy-bird/actions/workflows/build-linux.yml)
+[![OSX Build](https://github.com/xfnty/flappy-bird/actions/workflows/build-macos.yml/badge.svg)](https://github.com/xfnty/flappy-bird/actions/workflows/build-macos.yml)
 
 </p>
 
