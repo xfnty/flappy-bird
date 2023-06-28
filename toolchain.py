@@ -127,6 +127,7 @@ def build(target: BuildTarget):
         quit(-1)
 
     print_stage_title('Building')
+    copy_assets(target)
     run_command(
         [
             CMAKE,

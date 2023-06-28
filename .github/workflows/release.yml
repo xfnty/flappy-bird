@@ -49,10 +49,10 @@ jobs:
       run: python toolchain.py -c --target Release
 
     - name: Building
-      run: python toolchain.py -b --target Release && mv ./build/release/flappy-bird ./flappy-bird
+      run: python toolchain.py -b --target Release
 
     - name: Zip linux artifact
-      run: zip -r flappybird-linux ./flappy-bird
+      run: zip -r flappybird-linux ./build/release
 
     - name: Upload linux artifact
       uses: actions/upload-artifact@v1
@@ -76,10 +76,10 @@ jobs:
       run: python toolchain.py -c --target Release
 
     - name: Building
-      run: python toolchain.py -b --target Release && mv ./build/release/flappy-bird ./flappy-bird
+      run: python toolchain.py -b --target Release
 
     - name: Zip macos artifact
-      run: zip -r flappybird-macos ./flappy-bird
+      run: zip -r flappybird-macos ./build/release
 
     - name: Upload macos artifact
       uses: actions/upload-artifact@v1
