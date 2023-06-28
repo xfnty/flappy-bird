@@ -179,10 +179,8 @@ void update_bird(gameplay_state_t* gameplay, game_t* game) {
 
     gameplay->bird_y += gameplay->bird_y_speed * GetFrameTime();
 
-    if (gameplay->bird_y + sprites.bird.height >= game->canvas.texture.height - sprites.base.height) {
+    if (gameplay->bird_y + sprites.bird.height >= game->canvas.texture.height - sprites.base.height)
         game_switch_state(game, gameplay_state_create());
-        return;
-    }
 
     Rectangle bird_rect = {
         (float)game->canvas.texture.width / 2 - (float)sprites.bird.width / 2,
@@ -211,10 +209,8 @@ void update_bird(gameplay_state_t* gameplay, game_t* game) {
         DrawRectangleLinesEx(top_pipe_rect, 1, ORANGE);
         DrawRectangleLinesEx(bottom_pipe_rect, 1, ORANGE);
 
-        if (CheckCollisionRecs(bird_rect, top_pipe_rect) || CheckCollisionRecs(bird_rect, bottom_pipe_rect)) {
+        if (CheckCollisionRecs(bird_rect, top_pipe_rect) || CheckCollisionRecs(bird_rect, bottom_pipe_rect))
             game_switch_state(game, gameplay_state_create());
-            return;
-        }
     }
 }
 

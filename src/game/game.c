@@ -1,3 +1,4 @@
+#include "game/state.h"
 #include <game/game.h>
 
 #include <assert.h>
@@ -35,10 +36,19 @@ void game_tick(game_t* game, update_context_t ctx) {
     assert(game != NULL);
     assert(game->was_initialized);
 
-    game->is_running = !WindowShouldClose();
+    if (game->_next_state.name) {
+        game_state_exit(&game->state, game);
+        game->state = game->_next_state;
+        game->_next_state = (game_state_t){0};
+        game_state_enter(&game->state, game);
+
+        LOGF("entered state \"%s\"", strid_get_str(game->state.name));
+    }
 
     ClearBackground(BLACK);
     game_state_update(&game->state, game, ctx);
+
+    game->is_running = !WindowShouldClose();
 }
 
 void game_debug_draw(game_t* game, update_context_t ctx) {
@@ -59,9 +69,5 @@ void game_switch_state(game_t* game, game_state_t new_state) {
     assert(game != NULL);
     assert(game->was_initialized);
 
-    game_state_exit(&game->state, game);
-    game->state = new_state;
-    game_state_enter(&game->state, game);
-
-    LOGF("entered state \"%s\"", strid_get_str(new_state.name));
+    game->_next_state = new_state;
 }

@@ -13,6 +13,7 @@ typedef struct game_s {
     bool was_initialized;
     bool is_running;
     game_state_t state;
+    game_state_t _next_state;
 
     RenderTexture2D canvas;
 } game_t;
