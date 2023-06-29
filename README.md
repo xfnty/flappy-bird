@@ -6,6 +6,10 @@
 
 </p>
 
+
+![gameplay video](gameplay.mp4)
+
+
 **TODO:**
 - [x] Base and background
 - [x] Pipes
@@ -14,6 +18,8 @@
 - [x] Bird animations
 - [x] Game Over screen
 - [x] Start The Game screen
+- [ ] Audio
+- [ ] Fix segfaults
 
 
 ## Developing
