@@ -1,14 +1,20 @@
 MAKEFLAGS=--no-print-directory --quiet
 
-PROJECT_NAME=flappy-bird
-CMAKE_DIR=.cmake
-OUTPUT_DIR=bin
-EXE=$(OUTPUT_DIR)/$(PROJECT_NAME)
+ifdef OS
+	path = $(subst /,\,$1)
+else
+	path = $1
+endif
 
-CONFIGURE=configure c
-BUILD=build b
-RUN=run r
-DEBUG=debug d
+PROJECT_NAME=flappy-bird
+CMAKE_DIR:=.cmake
+OUTPUT_DIR:=bin
+EXE=$(call path, $(OUTPUT_DIR)/$(PROJECT_NAME))
+
+CONFIGURE:=configure c
+BUILD:=build b
+RUN:=run r
+DEBUG:=debug d
 
 all: configure build run
 
@@ -16,7 +22,7 @@ $(CONFIGURE):
 	echo ----- Configuring -----
 	mkdir -p $(CMAKE_DIR)
 	cmake -B $(CMAKE_DIR) -S . -DCMAKE_BUILD_TYPE=Debug -DCMAKE_EXPORT_COMPILE_COMMANDS=1
-	cp -f $(CMAKE_DIR)/compile_commands.json ./compile_commands.json
+	cp -f $(call path, $(CMAKE_DIR)/compile_commands.json) compile_commands.json
 
 $(BUILD):
 	echo ----- Building -----
@@ -25,13 +31,13 @@ $(BUILD):
 
 $(RUN):
 	echo ----- Running -----
-	cp -rf ./assets $(OUTPUT_DIR)
+	cp -rf assets $(OUTPUT_DIR)
 	cd $(OUTPUT_DIR)
 	$(EXE)
 
 $(DEBUG):
 	echo ----- Debugging -----
-	cp -rf ./assets $(OUTPUT_DIR)
+	cp -rf assets $(OUTPUT_DIR)
 	cd $(OUTPUT_DIR)
 	gdb -q --return-child-result $(EXE)
 
