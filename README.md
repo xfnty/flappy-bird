@@ -12,8 +12,8 @@
 - [x] Bird
 - [x] Score
 - [x] Bird animations
-- [ ] Game Over screen
-- [ ] Start The Game screen
+- [x] Game Over screen
+- [x] Start The Game screen
 
 
 ## Developing

@@ -30,6 +30,7 @@ static struct {
     Texture2D bird_downflap;
     Texture2D bird_upflap;
     Texture2D gameover;
+    Texture2D intro;
     Texture2D digits[10];
 } sprites = {0};
 
@@ -40,6 +41,7 @@ typedef struct gameplay_state_s {
     bool is_bird_between_pipes;
     bool is_debug;
     bool is_gameover;
+    bool is_started;
     float scroll_speed;
     int score;
     kvec_t(Vector2) pipes;
@@ -71,6 +73,7 @@ static void _gameplay_state_enter(game_state_t* state, game_t* game) {
     if (sprites.bird_upflap.id == 0)    sprites.bird_upflap     = LoadTexture("assets/upflap.png");
     if (sprites.bird_midflap.id == 0)   sprites.bird_midflap    = LoadTexture("assets/midflap.png");
     if (sprites.gameover.id == 0)       sprites.gameover        = LoadTexture("assets/gameover.png");
+    if (sprites.intro.id == 0)          sprites.intro           = LoadTexture("assets/message.png");
     for (int i = 0; i < STACKARRAY_SIZE(sprites.digits); i++)
         if (sprites.digits[i].id == 0) sprites.digits[i] = LoadTexture(TextFormat("assets/%d.png", i));
 
@@ -92,14 +95,14 @@ static void _gameplay_state_update(game_state_t* state, game_t* game, update_con
     ClearBackground(WHITE);
     DrawTexture(sprites.bg_day, 0, 0, WHITE);
 
-    if (!gameplay->is_paused) {
+    if (!gameplay->is_paused && gameplay->is_started) {
         update_pipes(gameplay, game);
         update_bird(gameplay, game);
     }
 
     draw_pipes(gameplay, game, ctx);
     draw_base(gameplay, game, ctx);
-    draw_bird(gameplay, game);
+    if (gameplay->is_started) draw_bird(gameplay, game);
     draw_score(gameplay, game);
 
     if (gameplay->is_debug)
@@ -113,6 +116,9 @@ static void _gameplay_state_update(game_state_t* state, game_t* game, update_con
         game->is_running = false;
     if (gameplay->is_gameover && IsKeyPressed(KEY_SPACE))
         game_switch_state(game, gameplay_state_create());
+    if (!gameplay->is_started && (GetKeyPressed() || IsMouseButtonPressed(MOUSE_LEFT_BUTTON))) {
+        gameplay->is_started = true;
+    }
 }
 
 static void _gameplay_state_exit(game_state_t* state, game_t* game) {
@@ -169,7 +175,7 @@ void draw_pipes(gameplay_state_t* gameplay, game_t* game, update_context_t ctx) 
 }
 
 void draw_base(gameplay_state_t* gameplay, game_t* game, update_context_t ctx) {
-    float shift = (gameplay->is_paused) ? 0 : gameplay->scroll_speed * (GetTime() - (int)GetTime());
+    float shift = (gameplay->is_paused || !gameplay->is_started) ? 0 : gameplay->scroll_speed * (GetTime() - (int)GetTime());
     for (int i = 0; sprites.base.width * i - shift <= game->canvas.texture.width; i++) {
         DrawTexture(
             sprites.base,
@@ -204,6 +210,11 @@ void draw_bird(gameplay_state_t* gameplay, game_t* game) {
 }
 
 void draw_score(gameplay_state_t* gameplay, game_t* game) {
+    if (!gameplay->is_started) {
+        DrawTexture(sprites.intro, game->canvas.texture.width / 2.0f - sprites.intro.width / 2.0f, 50, WHITE);
+        return;
+    }
+
     const char* s = TextFormat("%d", gameplay->score);
     float l = 0;
 
