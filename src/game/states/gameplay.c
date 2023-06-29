@@ -27,7 +27,9 @@ static struct {
     Texture2D bg_day;
     Texture2D base;
     Texture2D pipe;
-    Texture2D bird;
+    Texture2D bird_midflap;
+    Texture2D bird_downflap;
+    Texture2D bird_upflap;
     Texture2D digits[10];
 } sprites = {0};
 
@@ -58,10 +60,12 @@ static void _gameplay_state_enter(game_state_t* state, game_t* game) {
 
     *gameplay = (gameplay_state_t) {0};
 
-    if (sprites.bg_day.id == 0) sprites.bg_day = LoadTexture("assets/background-day.png");
-    if (sprites.base.id == 0) sprites.base = LoadTexture("assets/base.png");
-    if (sprites.pipe.id == 0) sprites.pipe = LoadTexture("assets/pipe.png");
-    if (sprites.bird.id == 0) sprites.bird = LoadTexture("assets/midflap.png");
+    if (sprites.bg_day.id == 0)         sprites.bg_day          = LoadTexture("assets/background-day.png");
+    if (sprites.base.id == 0)           sprites.base            = LoadTexture("assets/base.png");
+    if (sprites.pipe.id == 0)           sprites.pipe            = LoadTexture("assets/pipe.png");
+    if (sprites.bird_downflap.id == 0)  sprites.bird_downflap   = LoadTexture("assets/downflap.png");
+    if (sprites.bird_upflap.id == 0)    sprites.bird_upflap     = LoadTexture("assets/upflap.png");
+    if (sprites.bird_midflap.id == 0)   sprites.bird_midflap    = LoadTexture("assets/midflap.png");
     for (int i = 0; i < STACKARRAY_SIZE(sprites.digits); i++)
         if (sprites.digits[i].id == 0) sprites.digits[i] = LoadTexture(TextFormat("assets/%d.png", i));
 
@@ -170,17 +174,24 @@ void draw_base(gameplay_state_t* gameplay, game_t* game, update_context_t ctx) {
 }
 
 void draw_bird(gameplay_state_t* gameplay, game_t* game) {
+    float r = gameplay->bird_y_speed / 6.0f;
+    Texture2D* sprite = (r < -10)
+        ? &sprites.bird_downflap
+        : (r < 10
+            ? &sprites.bird_midflap
+            : &sprites.bird_upflap);
+
     DrawTexturePro(
-        sprites.bird,
-        (Rectangle){0,0,sprites.bird.width,sprites.bird.height},
+        *sprite,
+        (Rectangle){0,0,sprite->width,sprite->height},
         (Rectangle){
             game->canvas.texture.width / 2.0f,
             gameplay->bird_y,
-            sprites.bird.width,
-            sprites.bird.height
+            sprite->width,
+            sprite->height
         },
-        (Vector2){sprites.bird.width/2.0f, sprites.bird.height/2.0f},
-        gameplay->bird_y_speed / 6.0f,
+        (Vector2){sprite->width/2.0f, sprite->height/2.0f},
+        MIN(gameplay->bird_y_speed / 6.0f, 90),
         WHITE
     );
 }
@@ -207,10 +218,10 @@ void draw_score(gameplay_state_t* gameplay, game_t* game) {
 void debug_draw(gameplay_state_t* gameplay, game_t* game) {
     DrawRectangleLinesEx(
         (Rectangle) {
-            game->canvas.texture.width / 2.0f - sprites.bird.width / 2.0f,
-            gameplay->bird_y - (float)sprites.bird.height / 2,
-            sprites.bird.width,
-            sprites.bird.height
+            game->canvas.texture.width / 2.0f - sprites.bird_midflap.width / 2.0f,
+            gameplay->bird_y - (float)sprites.bird_midflap.height / 2,
+            sprites.bird_midflap.width,
+            sprites.bird_midflap.height
         },
         1,
         RED
@@ -251,14 +262,14 @@ void update_bird(gameplay_state_t* gameplay, game_t* game) {
 
     gameplay->bird_y += gameplay->bird_y_speed * GetFrameTime();
 
-    if (gameplay->bird_y + sprites.bird.height >= game->canvas.texture.height - sprites.base.height)
+    if (gameplay->bird_y + sprites.bird_midflap.height >= game->canvas.texture.height - sprites.base.height)
         game_switch_state(game, gameplay_state_create());
 
     Rectangle bird_rect = {
-        (float)game->canvas.texture.width / 2 - (float)sprites.bird.width / 2,
-        gameplay->bird_y - (float)sprites.bird.height / 2,
-        sprites.bird.width,
-        sprites.bird.height
+        (float)game->canvas.texture.width / 2 - (float)sprites.bird_midflap.width / 2,
+        gameplay->bird_y - (float)sprites.bird_midflap.height / 2,
+        sprites.bird_midflap.width,
+        sprites.bird_midflap.height
     };
 
     bool bird_between_pipes = false;

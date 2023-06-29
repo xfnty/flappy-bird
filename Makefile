@@ -16,7 +16,7 @@ BUILD:=build b
 RUN:=run r
 DEBUG:=debug d
 
-all: configure build run
+all: $(CMAKE_DIR) build run
 
 $(CONFIGURE):
 	echo ----- Configuring -----
@@ -40,6 +40,12 @@ $(DEBUG):
 	cp -rf assets $(OUTPUT_DIR)
 	cd $(OUTPUT_DIR)
 	gdb -q --return-child-result $(EXE)
+
+$(CMAKE_DIR):
+	echo ----- Configuring -----
+	-mkdir -p $(CMAKE_DIR)
+	cmake -B $(CMAKE_DIR) -S . -DCMAKE_BUILD_TYPE=Debug -DCMAKE_EXPORT_COMPILE_COMMANDS=1
+	-cp -f $(call path, $(CMAKE_DIR)/compile_commands.json) compile_commands.json
 
 clean:
 	git clean -Xdfq

@@ -11,7 +11,7 @@
 - [x] Pipes
 - [x] Bird
 - [x] Score
-- [ ] Bird animations
+- [x] Bird animations
 - [ ] Game Over screen
 - [ ] Start The Game screen
 
