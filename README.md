@@ -7,7 +7,7 @@
 </p>
 
 
-![](gameplay.mov)
+<img src="gameplay.gif" width="250" />
 
 
 **TODO:**
