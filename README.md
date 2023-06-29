@@ -7,7 +7,7 @@
 </p>
 
 
-![gameplay video](gameplay.mp4)
+![](gameplay.mov)
 
 
 **TODO:**
