@@ -15,7 +15,6 @@
 #include "game/game.h"
 
 
-const float scroll_speed = 75;
 const float space_between_pipes = 200;
 const float pipe_window_height = 80;
 const float pipe_min_y = 100;
@@ -30,6 +29,7 @@ static struct {
     Texture2D bird_midflap;
     Texture2D bird_downflap;
     Texture2D bird_upflap;
+    Texture2D gameover;
     Texture2D digits[10];
 } sprites = {0};
 
@@ -39,6 +39,8 @@ typedef struct gameplay_state_s {
     float bird_y_speed;
     bool is_bird_between_pipes;
     bool is_debug;
+    bool is_gameover;
+    float scroll_speed;
     int score;
     kvec_t(Vector2) pipes;
 } gameplay_state_t;
@@ -60,12 +62,15 @@ static void _gameplay_state_enter(game_state_t* state, game_t* game) {
 
     *gameplay = (gameplay_state_t) {0};
 
+    gameplay->scroll_speed = 75;
+
     if (sprites.bg_day.id == 0)         sprites.bg_day          = LoadTexture("assets/background-day.png");
     if (sprites.base.id == 0)           sprites.base            = LoadTexture("assets/base.png");
     if (sprites.pipe.id == 0)           sprites.pipe            = LoadTexture("assets/pipe.png");
     if (sprites.bird_downflap.id == 0)  sprites.bird_downflap   = LoadTexture("assets/downflap.png");
     if (sprites.bird_upflap.id == 0)    sprites.bird_upflap     = LoadTexture("assets/upflap.png");
     if (sprites.bird_midflap.id == 0)   sprites.bird_midflap    = LoadTexture("assets/midflap.png");
+    if (sprites.gameover.id == 0)       sprites.gameover        = LoadTexture("assets/gameover.png");
     for (int i = 0; i < STACKARRAY_SIZE(sprites.digits); i++)
         if (sprites.digits[i].id == 0) sprites.digits[i] = LoadTexture(TextFormat("assets/%d.png", i));
 
@@ -106,6 +111,8 @@ static void _gameplay_state_update(game_state_t* state, game_t* game, update_con
         gameplay->is_debug = !gameplay->is_debug;
     if (IsKeyPressed(KEY_ESCAPE))
         game->is_running = false;
+    if (gameplay->is_gameover && IsKeyPressed(KEY_SPACE))
+        game_switch_state(game, gameplay_state_create());
 }
 
 static void _gameplay_state_exit(game_state_t* state, game_t* game) {
@@ -162,7 +169,7 @@ void draw_pipes(gameplay_state_t* gameplay, game_t* game, update_context_t ctx) 
 }
 
 void draw_base(gameplay_state_t* gameplay, game_t* game, update_context_t ctx) {
-    float shift = (gameplay->is_paused) ? 0 : scroll_speed * (GetTime() - (int)GetTime());
+    float shift = (gameplay->is_paused) ? 0 : gameplay->scroll_speed * (GetTime() - (int)GetTime());
     for (int i = 0; sprites.base.width * i - shift <= game->canvas.texture.width; i++) {
         DrawTexture(
             sprites.base,
@@ -213,6 +220,14 @@ void draw_score(gameplay_state_t* gameplay, game_t* game) {
         );
         t += sprites.digits[s[i] - '0'].width;
     }
+
+    if (gameplay->is_gameover)
+        DrawTexture(
+            sprites.gameover,
+            game->canvas.texture.width / 2.0f - sprites.gameover.width / 2.0f,
+            100,
+            WHITE
+        );
 }
 
 void debug_draw(gameplay_state_t* gameplay, game_t* game) {
@@ -256,14 +271,25 @@ void debug_draw(gameplay_state_t* gameplay, game_t* game) {
 }
 
 void update_bird(gameplay_state_t* gameplay, game_t* game) {
-    gameplay->bird_y_speed += bird_gravity_force * GetFrameTime();
-    if (IsKeyPressed(KEY_SPACE))
+    if (IsKeyPressed(KEY_SPACE) && !gameplay->is_gameover)
         gameplay->bird_y_speed = -bird_up_force;
 
     gameplay->bird_y += gameplay->bird_y_speed * GetFrameTime();
 
-    if (gameplay->bird_y + sprites.bird_midflap.height >= game->canvas.texture.height - sprites.base.height)
-        game_switch_state(game, gameplay_state_create());
+    if (gameplay->is_gameover) {
+        gameplay->bird_y = CONSTRAIN(gameplay->bird_y, 0, game->canvas.texture.height - sprites.base.height - sprites.bird_midflap.height);
+        if (gameplay->bird_y < game->canvas.texture.height - sprites.base.height - sprites.bird_midflap.height) {
+            gameplay->bird_y_speed += bird_gravity_force * GetFrameTime();
+        }
+        return;
+    }
+
+    gameplay->bird_y_speed += bird_gravity_force * GetFrameTime();
+
+    if (gameplay->bird_y + sprites.bird_midflap.height >= game->canvas.texture.height - sprites.base.height) {
+        gameplay->is_gameover = true;
+        gameplay->scroll_speed = 0;
+    }
 
     Rectangle bird_rect = {
         (float)game->canvas.texture.width / 2 - (float)sprites.bird_midflap.width / 2,
@@ -295,8 +321,10 @@ void update_bird(gameplay_state_t* gameplay, game_t* game) {
             .height = pipe_window_height
         };
 
-        if (CheckCollisionRecs(bird_rect, top_pipe_rect) || CheckCollisionRecs(bird_rect, bottom_pipe_rect))
-            game_switch_state(game, gameplay_state_create());
+        if (CheckCollisionRecs(bird_rect, top_pipe_rect) || CheckCollisionRecs(bird_rect, bottom_pipe_rect)) {
+            gameplay->is_gameover = true;
+            gameplay->scroll_speed = 0;
+        }
         
         bird_between_pipes |= CheckCollisionRecs(bird_rect, score_trigger_rect);
     }
@@ -308,7 +336,7 @@ void update_bird(gameplay_state_t* gameplay, game_t* game) {
 
 void update_pipes(gameplay_state_t* gameplay, game_t* game) {
     for (int i = 0; i < kv_size(gameplay->pipes); i++)
-        kv_A(gameplay->pipes, i).x -= scroll_speed * GetFrameTime();
+        kv_A(gameplay->pipes, i).x -= gameplay->scroll_speed * GetFrameTime();
 
     if (kv_A(gameplay->pipes, 0).x + (float)sprites.pipe.width / 2 <= 0) {
         for (int i = 0; i < kv_size(gameplay->pipes) - 1; i++)
