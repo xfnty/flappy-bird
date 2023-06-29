@@ -7,7 +7,7 @@
 </p>
 
 
-<img src="gameplay.gif" width="250" />
+<img src="gameplay.gif" width="450" />
 
 
 **TODO:**
