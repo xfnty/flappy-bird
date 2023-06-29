@@ -20,13 +20,13 @@ all: configure build run
 
 $(CONFIGURE):
 	echo ----- Configuring -----
-	mkdir -p $(CMAKE_DIR)
+	-mkdir -p $(CMAKE_DIR)
 	cmake -B $(CMAKE_DIR) -S . -DCMAKE_BUILD_TYPE=Debug -DCMAKE_EXPORT_COMPILE_COMMANDS=1
-	cp -f $(call path, $(CMAKE_DIR)/compile_commands.json) compile_commands.json
+	-cp -f $(call path, $(CMAKE_DIR)/compile_commands.json) compile_commands.json
 
 $(BUILD):
 	echo ----- Building -----
-	mkdir -p $(OUTPUT_DIR)
+	-mkdir -p $(OUTPUT_DIR)
 	cmake --build $(CMAKE_DIR)
 
 $(RUN):
