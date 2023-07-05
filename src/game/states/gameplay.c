@@ -34,6 +34,11 @@ static struct {
     Texture2D digits[10];
 } sprites = {0};
 
+static struct {
+    Music flap;
+    Sound gameover;
+} sounds = {0};
+
 typedef struct gameplay_state_s {
     bool is_paused;
     float bird_y;
@@ -76,6 +81,9 @@ static void _gameplay_state_enter(game_state_t* state, game_t* game) {
     if (sprites.intro.id == 0)          sprites.intro           = LoadTexture("assets/message.png");
     for (int i = 0; i < STACKARRAY_SIZE(sprites.digits); i++)
         if (sprites.digits[i].id == 0) sprites.digits[i] = LoadTexture(TextFormat("assets/%d.png", i));
+
+    if (!IsMusicReady(sounds.flap))     sounds.flap     = LoadMusicStream("assets/die.mp3");
+    if (!IsSoundReady(sounds.gameover)) sounds.gameover = LoadSoundFromWave(LoadWave("assets/die.wav"));
 
     gameplay->bird_y = ((float)game->canvas.texture.height - sprites.base.height) / 2;
 
@@ -282,8 +290,10 @@ void debug_draw(gameplay_state_t* gameplay, game_t* game) {
 }
 
 void update_bird(gameplay_state_t* gameplay, game_t* game) {
-    if (IsKeyPressed(KEY_SPACE) && !gameplay->is_gameover)
+    if (IsKeyPressed(KEY_SPACE) && !gameplay->is_gameover) {
         gameplay->bird_y_speed = -bird_up_force;
+        PlayMusicStream(sounds.flap);
+    }
 
     gameplay->bird_y += gameplay->bird_y_speed * GetFrameTime();
 

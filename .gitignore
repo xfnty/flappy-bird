@@ -1,10 +1,12 @@
 # Files
 *.sublime*
 compile_commands.json
+*.zip
 
 
 # Folders
 bin/
+dist/
 .cmake/
 .ignore/
 .cache/
