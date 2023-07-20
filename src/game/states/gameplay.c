@@ -137,8 +137,8 @@ static void _gameplay_state_exit(game_state_t* state, game_t* game) {
     kv_destroy(gameplay->pipes);
     kv_init(gameplay->pipes);
 
+    // memset(gameplay, 0, sizeof(*gameplay));
     free(state->data);
-    memset(gameplay, 0, sizeof(*gameplay));
 }
 
 game_state_t gameplay_state_create() {
